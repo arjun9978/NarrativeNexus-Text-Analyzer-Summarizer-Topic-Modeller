@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NarrativeNexus - Text Analysis Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>The NarrativeNexus</h1>
+            <p>The Dynamic Text Analysis Platform</p>
+            <div class="subtitle">Summarization • Sentiment Analysis • Topic Modeling</div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <form action="{{ url_for('analyze') }}" method="POST" enctype="multipart/form-data" id="analysisForm">
+                <div class="input-section">
+                    <h2>Enter the Text or Upload your files below: </h2>
+                    
+                    <div class="tab-container">
+                        <button type="button" class="tab-button active" onclick="showTab('text')">
+                            Type your Text here
+                        </button>
+                        <button type="button" class="tab-button" onclick="showTab('file')">
+                             Upload your File here
+                        </button>
+                    </div>
+
+                    <!-- Text Input Tab -->
+                    <div id="text-tab" class="tab-content active">
+                        <label for="textInput">Enter your text for analysis:</label>
+                        <textarea 
+                            id="textInput" 
+                            name="text" 
+                            rows="12"
+                            placeholder="Type or paste your text here...
+
+Examples:
+• News articles
+• Product reviews
+• Research papers
+• Social media posts
+• Any English text you want to analyze!"
+                        ></textarea>
+                        <div class="char-count">
+                            <span id="charCount">0</span> characters
+                        </div>
+                    </div>
+
+                    <!-- File Upload Tab -->
+                    <div id="file-tab" class="tab-content">
+                        <label for="fileInput">Upload a .txt file:</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" id="fileInput" name="file" accept=".txt" onchange="handleFileSelect(this)">
+                            <div class="file-upload-placeholder">
+                                <div class="upload-icon">📄</div>
+                                <p>Click to select a .txt file or drag and drop here</p>
+                                <small>Maximum file size: 16 MB</small>
+                            </div>
+                            <div class="file-name" id="fileName"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="btn-icon">✨</span>
+                        Analyze Text
+                    </button>
+                    <button type="reset" class="btn btn-secondary" onclick="resetForm()">
+                        <span class="btn-icon">🗑️</span>
+                        Clear
+                    </button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing your text with the models...</p>
+                    <small>This may take a few seconds</small>
+                </div>
+            </form>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h2>Dual Summarization</h2>
+                    <p>Both extractive and abstractive summaries</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h2>Sentiment Analysis</h2>
+                    <p>RoBERTa transformer with confidence scores</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h2>Topic Classification</h2>
+                    <p>LDA model trained on 20 Newsgroups</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p><small>Powered by BART, RoBERTa, and LDA models</small></p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // Clear the other input
+            if (tabName === 'text') {
+                document.getElementById('fileInput').value = '';
+                document.getElementById('fileName').textContent = '';
+            } else {
+                document.getElementById('textInput').value = '';
+                updateCharCount();
+            }
+        }
+
+        // Character count
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+
+        textInput.addEventListener('input', updateCharCount);
+
+        function updateCharCount() {
+            const count = textInput.value.length;
+            charCount.textContent = count.toLocaleString();
+        }
+
+        // File upload handling
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                // Clear text input when file is selected
+                document.getElementById('textInput').value = '';
+                updateCharCount();
+            }
+        }
+
+        // Drag and drop
+        const fileUploadArea = document.getElementById('fileUploadArea');
+
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('drag-over');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('drag-over');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect(document.getElementById('fileInput'));
+            }
+        });
+
+        // Form submission
+        const form = document.getElementById('analysisForm');
+        const loading = document.getElementById('loading');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', function() {
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+        });
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('fileName').textContent = '';
+            updateCharCount();
+            loading.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+
+        // Sample texts
+        const samples = {
+            tech: "Artificial intelligence is revolutionizing the healthcare industry. Machine learning algorithms can now detect diseases earlier and more accurately than traditional methods. This technology has the potential to save countless lives.",
+            politics: "The recent election has sparked intense debate across the nation. Voters are divided on key issues including healthcare reform, economic policy, and climate change. Politicians from both parties are calling for unity.",
+            science: "Scientists have discovered a new exoplanet in a potentially habitable zone. The planet, located 40 light-years away, shows signs of water vapor in its atmosphere. This finding could have significant implications for the search for extraterrestrial life."
+        };
+
+        // Quick fill buttons (optional - add to HTML if needed)
+        window.fillSample = function(type) {
+            document.getElementById('textInput').value = samples[type];
+            updateCharCount();
+            showTab('text');
+        };
+    </script>
+</body>
+</html>

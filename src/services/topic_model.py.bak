@@ -1,0 +1,160 @@
+"""
+Topic Modeling Service - LDA-based (pre-trained model)
+IMPORTANT: Model must be trained first using train_lda.py script
+"""
+import logging
+import os
+import pickle
+from typing import Dict, Optional
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+
+logger = logging.getLogger(__name__)
+
+class TopicModelService:
+    def __init__(self, model_path: str = "models/lda_model.pkl"):
+        """
+        Load pre-trained LDA topic model
+        
+        CRITICAL: This expects a trained model to exist at model_path
+        If no model exists, prediction will fail
+        """
+        self.model_path = model_path
+        self.model = None
+        self.vectorizer = None
+        self.topic_names = None
+        
+        # Try to load existing model
+        self._load_model()
+    
+    def _load_model(self):
+        """
+        Load saved LDA model, vectorizer, and topic names from separate pickle files
+        """
+        model_dir = os.path.dirname(self.model_path)
+        vectorizer_path = os.path.join(model_dir, 'vectorizer.pkl')
+        metadata_path = os.path.join(model_dir, 'lda_metadata.pkl')
+        
+        if not os.path.exists(self.model_path):
+            logger.warning(f"⚠️  No trained model found at {self.model_path}")
+            logger.warning("⚠️  You MUST train a topic model first using: python scripts/train_lda_20newsgroups.py")
+            logger.warning("⚠️  Topic prediction will return a placeholder until model is trained.")
+            return
+        
+        try:
+            # Load LDA model
+            with open(self.model_path, 'rb') as f:
+                self.model = pickle.load(f)
+            
+            # Load vectorizer
+            with open(vectorizer_path, 'rb') as f:
+                self.vectorizer = pickle.load(f)
+            
+            # Load metadata (USE REAL 20 NEWSGROUPS CATEGORIES!)
+            with open(metadata_path, 'rb') as f:
+                metadata = pickle.load(f)
+                # Use actual newsgroup category names instead of LDA's learned topics
+                self.categories = metadata.get('categories', [])
+                self.category_mapping = metadata.get('category_topic_mapping', {})
+                # Create topic-to-category reverse mapping
+                self.topic_to_category = {}
+                for category, mapping in self.category_mapping.items():
+                    topic_id = mapping['topic_id']
+                    if topic_id not in self.topic_to_category:
+                        self.topic_to_category[topic_id] = []
+                    self.topic_to_category[topic_id].append(category)
+            
+            logger.info(f"✓ LDA model loaded from {self.model_path}")
+            logger.info(f"✓ Vectorizer loaded from {vectorizer_path}")
+            logger.info(f"✓ Metadata loaded with {len(self.categories)} newsgroup categories")
+            logger.info(f"  Number of LDA topics: {self.model.n_components}")
+            
+        except Exception as e:
+            logger.error(f"Error loading model: {e}")
+            self.model = None
+            self.vectorizer = None
+    
+    def predict_topic(self, text: str) -> Dict[str, any]:
+        """
+        Predict the most likely 20 Newsgroups category for input text
+        Returns category name and probability distribution across ALL 20 categories
+        """
+        if self.model is None or self.vectorizer is None:
+            logger.warning("Model not loaded. Returning placeholder.")
+            return {
+                "topic_id": -1,
+                "topic_name": "Unknown (Model not trained)",
+                "confidence": 0.0,
+                "error": "Topic model not trained yet. Run training script first.",
+                "probabilities": {}
+            }
+        
+        try:
+            # Vectorize input text
+            text_vectorized = self.vectorizer.transform([text])
+            
+            # Get topic distribution (probability for each of 20 LDA topics)
+            topic_distribution = self.model.transform(text_vectorized)[0]
+            
+            # Calculate score for each newsgroup category
+            # Each category's score = probability of its dominant LDA topic
+            category_scores = {}
+            
+            if hasattr(self, 'category_mapping'):
+                for category in self.categories:
+                    cat_mapping = self.category_mapping.get(category, {})
+                    cat_topic_id = cat_mapping.get('topic_id', -1)
+                    
+                    if cat_topic_id >= 0 and cat_topic_id < len(topic_distribution):
+                        category_scores[category] = float(topic_distribution[cat_topic_id])
+                    else:
+                        category_scores[category] = 0.0
+            
+            # Find the newsgroup category with highest score
+            if category_scores:
+                best_category = max(category_scores, key=category_scores.get)
+                best_confidence = category_scores[best_category]
+            else:
+                # Fallback if mapping fails
+                dominant_topic_id = int(np.argmax(topic_distribution))
+                best_category = f"Topic {dominant_topic_id}"
+                best_confidence = float(topic_distribution[dominant_topic_id])
+            
+            # Sort categories by probability and get top 20 (all of them)
+            sorted_probs = dict(sorted(category_scores.items(), key=lambda x: x[1], reverse=True))
+            
+            return {
+                "topic_id": self.categories.index(best_category) if best_category in self.categories else -1,
+                "topic_name": best_category,
+                "confidence": round(best_confidence, 4),
+                "probabilities": {k: round(v, 4) for k, v in sorted_probs.items()}
+            }
+        
+        except Exception as e:
+            logger.error(f"Topic prediction error: {e}")
+            return {
+                "topic_id": -1,
+                "topic_name": "Error",
+                "confidence": 0.0,
+                "error": str(e),
+                "probabilities": {}
+            }
+    
+    def get_topic_keywords(self, topic_id: int, n_words: int = 10) -> list:
+        """
+        Get top keywords for a specific topic
+        """
+        if self.model is None or self.vectorizer is None:
+            return []
+        
+        try:
+            feature_names = self.vectorizer.get_feature_names_out()
+            topic_words = self.model.components_[topic_id]
+            top_word_indices = topic_words.argsort()[-n_words:][::-1]
+            
+            return [feature_names[i] for i in top_word_indices]
+        
+        except Exception as e:
+            logger.error(f"Error getting keywords: {e}")
+            return []

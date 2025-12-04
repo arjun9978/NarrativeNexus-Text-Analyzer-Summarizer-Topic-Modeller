@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - NarrativeNexus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>The NarrativeNexus</h1>
+            <p>Analysis Results</p>
+        </header>
+
+        <div class="content">
+            <div class="back-button-container">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    ← Analyze Another Text
+                </a>
+            </div>
+
+            <!-- Original Text -->
+            <div class="result-section">
+                <h2>📄 Original Text</h2>
+                <div class="original-text">
+                    {{ text }}
+                </div>
+                <div class="text-stats">
+                    Words: {{ text.split()|length }} | Characters: {{ text|length }}
+                </div>
+            </div>
+
+            <!-- Summarization Results -->
+            <div class="result-section">
+                <h2>Summarization</h2>
+                
+                <div class="summary-card">
+                    <h3>Extractive Summary (TextRank)</h3>
+                    <p class="summary-description">Key sentences extracted from original text:</p>
+                    <div class="summary-content">
+                        {{ result.summary_extractive }}
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Abstractive Summary (BART)</h3>
+                    <p class="summary-description">AI-generated paraphrased summary:</p>
+                    <div class="summary-content">
+                        {{ result.summary_abstractive }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentiment Analysis -->
+            <div class="result-section">
+                <h2>Sentiment Analysis</h2>
+                <div class="sentiment-card">
+                    <div class="sentiment-result">
+                        {% set sentiment_lower = result.sentiment.label.lower() %}
+                        {% if 'positive' in sentiment_lower %}
+                            <div class="sentiment-icon positive"> 😊 </div>
+                    
+                            <div class="sentiment-label positive-label">POSITIVE</div>
+                        {% elif 'negative' in sentiment_lower %}
+                            <div class="sentiment-icon negative">😞</div>
+                            <div class="sentiment-label negative-label">NEGATIVE</div>
+                        {% else %}
+                            <div class="sentiment-icon neutral">😐</div>
+                            <div class="sentiment-label neutral-label">NEUTRAL</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label">Confidence</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: {{ (result.sentiment.confidence * 100)|round }}%">
+                                {{ (result.sentiment.confidence * 100)|round(1) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if result.sentiment.scores %}
+                    <div class="topic-probabilities" style="margin-top: 25px;">
+                        <h4>Detailed Score Breakdown:</h4>
+                        <div class="prob-list">
+                            {% for label, score in result.sentiment.scores.items() %}
+                                <div class="prob-item">
+                                    <span class="prob-topic">{{ label.title() }}</span>
+                                    <div class="prob-bar-small">
+                                        <div class="prob-fill" style="width: {{ (score * 100)|round }}%"></div>
+                                    </div>
+                                    <span class="prob-value">{{ (score * 100)|round(1) }}%</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if result.sentiment.analysis %}
+                    <div class="model-info" style="margin-top: 20px; text-align: left; padding: 15px; background: rgba(0, 255, 136, 0.05); border-radius: 12px; border-left: 3px solid var(--primary-color);">
+                        <p style="color: var(--text-light); margin: 0;">
+                            <strong>Analysis:</strong> {{ result.sentiment.analysis }}
+                        </p>
+                        {% if result.sentiment.text_length %}
+                        <p style="color: var(--text-muted); margin: 5px 0 0 0; font-size: 0.9em;">
+                            Analyzed {{ result.sentiment.text_length }} words using {{ result.sentiment.model }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="model-info">
+                        <small>Model: {{ result.sentiment.model }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Classification -->
+            <div class="result-section">
+                <h2>Topic Classification</h2>
+                <div class="topic-card">
+                    <div class="topic-header">
+                        <div class="topic-badge">
+                            Topic #{{ result.topic.topic_id }}
+                        </div>
+                        <h3 class="topic-name">{{ result.topic.topic_name }}</h3>
+                    </div>
+
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label">Confidence</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill topic-confidence" style="width: {{ (result.topic.confidence * 100)|round }}%">
+                                {{ (result.topic.confidence * 100)|round(1) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="topic-probabilities">
+                        <h4>All Topic Probabilities:</h4>
+                        <div class="prob-list">
+                            {% for topic, prob in result.topic.probabilities.items() %}
+                                {% if prob > 0.01 %}
+                                    <div class="prob-item">
+                                        <span class="prob-topic">{{ topic }}</span>
+                                        <div class="prob-bar-small">
+                                            <div class="prob-fill" style="width: {{ (prob * 100)|round }}%"></div>
+                                        </div>
+                                        <span class="prob-value">{{ (prob * 100)|round(1) }}%</span>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    ✨ Analyze Another Text
+                </a>
+                <button onclick="window.print()" class="btn btn-secondary">
+                    🖨️ Print Results
+                </button>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Built with FastAPI, Transformers, and Scikit-learn</p>
+        </footer>
+    </div>
+
+    <script>
+        // Add animation on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.result-section');
+            sections.forEach((section, index) => {
+                setTimeout(() => {
+                    section.style.opacity = '0';
+                    section.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        section.style.transition = 'all 0.5s ease';
+                        section.style.opacity = '1';
+                        section.style.transform = 'translateY(0)';
+                    }, 50);
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

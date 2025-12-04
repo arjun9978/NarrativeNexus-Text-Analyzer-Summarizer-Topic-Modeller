@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Models and data (TOO LARGE - don't push)
+models/*.pkl
+models/*.pt
+models/*.bin
+# Allow our trained classifier models (small enough to push)
+!models/classifier.pkl
+!models/vectorizer.pkl
+!models/lda_metadata.pkl
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Hugging Face cache (HUGE - don't push)
+.cache/
+*.safetensors
+
+# Environment
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# FastAPI
+*.db
+*.sqlite
+
+# Temporary test files (not needed in repo)
+test_sample.txt
+test_interface.html
+quick_test.py
+test_api.py
+
+

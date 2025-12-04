@@ -1,0 +1,2 @@
+# Trained models saved here
+# - lda_model.pkl (required for topic prediction)
