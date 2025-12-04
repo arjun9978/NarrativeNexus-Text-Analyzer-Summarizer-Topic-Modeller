@@ -1,5 +1,23 @@
 # NarrativeNexus: The Dynamic Text Analysis Platform
 
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-green.svg)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-Educational-yellow.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active-success.svg)](https://github.com/springboardmentor443m-coder/NarrativeNexus-Dynamic-Text-Analysis)
+
+## 🌐 Live Demo
+
+> **Note**: To deploy this application, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
+> 
+> **Recommended Platform**: [Render.com](https://render.com) (supports all models, free tier)
+>
+> Once deployed, your live demo link will appear here:
+> ```
+> 🚀 Live Demo: https://your-app-name.onrender.com
+> ```
+
+---
+
 ## 1. Introduction
 
 The goal of this project is to develop a dynamic text analysis platform that can accept various types of text data, perform comprehensive analysis including summarization, sentiment detection, and topic classification, delivering actionable insights to users.
@@ -209,7 +227,7 @@ The platform implements both extractive and abstractive summarization to provide
 │                  FASTAPI BACKEND (Port 8000)                │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │  API Endpoints: /analyze | /upload | /health        │  │
+│  │  API Endpoints: /analyze | /upload |              │  │
 │  │  • Request Validation  • Model Loading  • Routing   │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                           │                                 │
@@ -490,23 +508,6 @@ curl -X POST "http://127.0.0.1:8000/upload" \
   -F "file=@article.txt"
 ```
 
-#### Python Example
-```python
-import requests
-
-# Analyze text
-response = requests.post(
-    "http://127.0.0.1:8000/analyze",
-    json={"text": "Your text here..."}
-)
-
-result = response.json()
-print(f"Extractive Summary: {result['summary_extractive']}")
-print(f"Abstractive Summary: {result['summary_abstractive']}")
-print(f"Sentiment: {result['sentiment']['label']} ({result['sentiment']['confidence']:.2%})")
-print(f"Topic: {result['topic']['category']} ({result['topic']['confidence']:.2%})")
-```
-
 ---
 
 ## 8. Technology Stack
@@ -659,7 +660,3 @@ This project is created for educational purposes as part of an academic assignme
 - **Email**: arjunbrt1303@gmail.com
 
 ---
-
-**Built with ❤️ using FastAPI, Flask, Transformers, and Scikit-learn**
-
-*NarrativeNexus - Turning text into actionable insights*
