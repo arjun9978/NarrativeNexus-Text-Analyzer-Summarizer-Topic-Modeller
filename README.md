@@ -1,23 +1,5 @@
 # NarrativeNexus: The Dynamic Text Analysis Platform
 
-[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.12-green.svg)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-Educational-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)](https://github.com/springboardmentor443m-coder/NarrativeNexus-Dynamic-Text-Analysis)
-
-## 🌐 Live Demo
-
-> **Note**: To deploy this application, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
-> 
-> **Recommended Platform**: [Render.com](https://render.com) (supports all models, free tier)
->
-> Once deployed, your live demo link will appear here:
-> ```
-> 🚀 Live Demo: https://your-app-name.onrender.com
-> ```
-
----
-
 ## 1. Introduction
 
 The goal of this project is to develop a dynamic text analysis platform that can accept various types of text data, perform comprehensive analysis including summarization, sentiment detection, and topic classification, delivering actionable insights to users.
