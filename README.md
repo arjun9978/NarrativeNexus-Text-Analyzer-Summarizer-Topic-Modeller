@@ -637,8 +637,7 @@ This project is created for educational purposes as part of an academic assignme
 
 ## 16. Contact & Support
 
-- **GitHub**: https://github.com/springboardmentor443m-coder/NarrativeNexus-Dynamic-Text-Analysis
-- **Branch**: ArjunPratap_Infosys
+
 - **Email**: arjunbrt1303@gmail.com
 
 ---
