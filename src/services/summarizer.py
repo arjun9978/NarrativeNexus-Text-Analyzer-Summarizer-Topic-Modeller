@@ -41,74 +41,95 @@ class SummarizerService:
             logger.error(f"Could not load T5 model: {e}")
             self.abstractive_pipeline = None
     
-    def summarize_extractive(self, text: str, sentence_count: int = 5) -> str:
+    def summarize_extractive(self, text: str, sentence_count: int = 3) -> str:
         """
         Extractive summarization using TextRank algorithm
         Selects most important sentences from original text
         """
         try:
+            # Count actual sentences in text
+            sentences_in_text = text.count('.') + text.count('!') + text.count('?')
+            
+            # Adjust sentence count to be reasonable (max 70% of original)
+            if sentences_in_text <= 3:
+                # Very short text - return 2 sentences max
+                adjusted_count = min(2, sentences_in_text)
+            else:
+                # Longer text - request fewer than total
+                adjusted_count = min(sentence_count, max(2, int(sentences_in_text * 0.6)))
+            
             parser = PlaintextParser.from_string(text, Tokenizer(self.language))
-            summary_sentences = self.extractive_summarizer(parser.document, sentence_count)
+            summary_sentences = self.extractive_summarizer(parser.document, adjusted_count)
             
             # Join sentences
             summary = " ".join([str(sentence) for sentence in summary_sentences])
             
-            if not summary:
-                # Fallback: return first few sentences
+            if not summary or len(summary) >= len(text) * 0.95:
+                # If summary is almost the same as original, force reduction
                 sentences = text.split('. ')
-                summary = '. '.join(sentences[:sentence_count]) + '.'
+                summary = '. '.join(sentences[:max(1, len(sentences) // 2)]) + '.'
             
             return summary
         
         except Exception as e:
             logger.error(f"Extractive summarization error: {e}")
-            # Fallback: return first few sentences instead of truncating
+            # Fallback: return first half of sentences
             sentences = text.split('. ')
-            return '. '.join(sentences[:3]) + '.' if len(sentences) >= 3 else text
+            return '. '.join(sentences[:max(1, len(sentences) // 2)]) + '.'
     
     def summarize_abstractive(self, text: str, max_length: int = 200, min_length: int = 50) -> str:
         """
-        Abstractive summarization using transformer model (BART)
-        Generates new sentences that capture key information
+        Abstractive summarization using transformer model (T5)
+        Generates compressed summaries with intelligent sentence selection
         """
         if self.abstractive_pipeline is None:
             logger.warning("Abstractive model not available, using extractive fallback")
-            return self.summarize_extractive(text, sentence_count=3)
+            return self.summarize_extractive(text, sentence_count=2)
         
         try:
-            # Truncate very long texts (BART has max token limit)
-            max_input_length = 1024
-            if len(text.split()) > max_input_length:
-                text = ' '.join(text.split()[:max_input_length])
+            # Truncate very long texts (T5 has max token limit)
+            max_input_length = 512
+            words = text.split()
+            if len(words) > max_input_length:
+                text = ' '.join(words[:max_input_length])
             
-            # Calculate dynamic lengths based on input
+            # Calculate dynamic lengths - force much shorter output
             input_word_count = len(text.split())
-            # T5 needs prefix "summarize: " and shorter output forces compression
-            max_length = min(150, max(50, int(input_word_count * 0.30)))
-            min_length = max(25, int(max_length * 0.40))
+            
+            # CRITICAL: Force abstractive to be MUCH shorter than extractive
+            max_length = min(64, max(25, int(input_word_count * 0.40)))
+            min_length = min(15, max(10, int(max_length * 0.30)))
             
             # Add T5 prefix for summarization task
             text_with_prefix = "summarize: " + text
             
-            # Generate summary with T5
+            # Generate summary with T5 - use sampling for variation
             result = self.abstractive_pipeline(
                 text_with_prefix,
                 max_length=max_length,
                 min_length=min_length,
                 do_sample=True,            # Enable sampling for variation
-                temperature=0.7,           # Add some randomness
-                top_k=50,                  # Top-k sampling
-                top_p=0.95,                # Nucleus sampling
-                truncation=True
+                temperature=0.8,           # Higher temp for more creativity
+                top_k=40,                  # Top-k sampling
+                top_p=0.90,                # Nucleus sampling
+                truncation=True,
+                num_beams=1                # Disable beam search when sampling
             )
             
             summary = result[0]['summary_text']
+            
+            # Ensure summary is actually shorter
+            if len(summary) >= len(text) * 0.80:
+                logger.warning("T5 summary too long, forcing compression")
+                sentences = summary.split('. ')
+                summary = '. '.join(sentences[:max(1, len(sentences) // 2)]) + '.'
+            
             return summary
         
         except Exception as e:
             logger.error(f"Abstractive summarization error: {e}")
-            # Fallback to extractive
-            return self.summarize_extractive(text, sentence_count=3)
+            # Fallback to extractive with fewer sentences
+            return self.summarize_extractive(text, sentence_count=2)
     
     def summarize_hybrid(self, text: str) -> dict:
         """
