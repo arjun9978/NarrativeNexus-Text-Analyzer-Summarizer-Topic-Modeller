@@ -159,13 +159,13 @@
 
                 <!-- LDA Topic Modeling -->
                 <div class="topic-card" style="margin-top: 25px;">
-                    <h3 style="color: #00d9ff; margin-bottom: 15px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">
                         Topic Modeling (LDA - Unsupervised)
                     </h3>
                     <p class="summary-description">Latent Dirichlet Allocation discovers hidden topic distributions:</p>
                     
                     <div class="topic-header">
-                        <div class="topic-badge" style="background: linear-gradient(135deg, #00d9ff, #0088cc);">
+                        <div class="topic-badge">
                             Topic #{{ result.topic.lda.topic_id }}
                         </div>
                         <h3 class="topic-name">{{ result.topic.lda.topic_name }}</h3>
@@ -174,7 +174,7 @@
                     <div class="confidence-bar-container">
                         <div class="confidence-label">Topic Weight</div>
                         <div class="confidence-bar">
-                            <div class="confidence-fill" style="width: {{ (result.topic.lda.confidence * 100)|round }}%; background: linear-gradient(90deg, #00d9ff, #0088cc);">
+                            <div class="confidence-fill topic-confidence" style="width: {{ (result.topic.lda.confidence * 100)|round }}%;">
                                 {{ (result.topic.lda.confidence * 100)|round(1) }}%
                             </div>
                         </div>
@@ -188,7 +188,7 @@
                                     <div class="prob-item">
                                         <span class="prob-topic">{{ topic }}</span>
                                         <div class="prob-bar-small">
-                                            <div class="prob-fill" style="width: {{ (prob * 100)|round }}%; background: linear-gradient(90deg, #00d9ff, #0088cc);"></div>
+                                            <div class="prob-fill" style="width: {{ (prob * 100)|round }}%;"></div>
                                         </div>
                                         <span class="prob-value">{{ (prob * 100)|round(1) }}%</span>
                                     </div>
