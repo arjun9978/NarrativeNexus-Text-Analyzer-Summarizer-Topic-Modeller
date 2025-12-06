@@ -11,53 +11,63 @@ build/
 dist/
 *.egg-info/
 
-# Models and data (TOO LARGE - don't push)
+# Models - Our trained models WILL be pushed (needed for production)
+# Trained models are essential for the app to work
 models/*.pkl
 models/*.pt
 models/*.bin
-# Allow our trained classifier models (small enough to push)
+# Allow our specific trained models
 !models/classifier.pkl
 !models/vectorizer.pkl
+!models/lda_model.pkl
+!models/lda_vectorizer.pkl
 !models/lda_metadata.pkl
+!models/classifier_metadata.pkl
+
+# Hugging Face models - Downloaded on first run
+.cache/
+*.safetensors
+transformers_cache/
+
+# Data - Keep folder structure only
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
-# Hugging Face cache (HUGE - don't push)
-.cache/
-*.safetensors
+# Uploads - Don't push user uploads
+uploads/*
+!uploads/.gitkeep
 
-# Environment
+# Environment files
 .env
-.venv
 
-# IDE
+# IDE settings
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Jupyter
-.ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
-
 # Logs
 *.log
 logs/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# FastAPI
+# Database files
 *.db
 *.sqlite
 
-# Temporary test files (not needed in repo)
-test_sample.txt
-test_interface.html
-quick_test.py
-test_api.py
+# Development/Testing files (don't push)
+test_*.py
+test_*.txt
+quick_*.py
+VERIFY_SYSTEM.py
+SYSTEM_STATUS.md
+analyze_*.py
+retrain_*.py
+cleanup_*.py
 
 

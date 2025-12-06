@@ -97,8 +97,13 @@ async def analyze_text(request: TextAnalysisRequest):
         # Sentiment analysis
         sentiment_result = sentiment_service.analyze(text)
         
-        # Topic modeling
-        topic_result = topic_service.predict_topic(text)
+        # Topic analysis: both supervised classification and unsupervised LDA modeling
+        classification = topic_service.classify_topic(text)
+        lda_modeling = topic_service.discover_topics_lda(text)
+        topic_result = {
+            "classification": classification,
+            "lda": lda_modeling
+        }
         
         return AnalysisResponse(
             summary_extractive=summary_extractive,
@@ -134,7 +139,12 @@ async def upload_file(file: UploadFile = File(...)):
         summary_extractive = summarizer_service.summarize_extractive(text)
         summary_abstractive = summarizer_service.summarize_abstractive(text)
         sentiment_result = sentiment_service.analyze(text)
-        topic_result = topic_service.predict_topic(text)
+        classification = topic_service.classify_topic(text)
+        lda_modeling = topic_service.discover_topics_lda(text)
+        topic_result = {
+            "classification": classification,
+            "lda": lda_modeling
+        }
         
         return JSONResponse({
             "filename": file.filename,

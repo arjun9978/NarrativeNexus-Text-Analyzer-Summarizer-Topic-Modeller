@@ -22,7 +22,7 @@
 
             <!-- Original Text -->
             <div class="result-section">
-                <h2>📄 Original Text</h2>
+                <h2>Original Text</h2>
                 <div class="original-text">
                     {{ text }}
                 </div>
@@ -59,14 +59,10 @@
                     <div class="sentiment-result">
                         {% set sentiment_lower = result.sentiment.label.lower() %}
                         {% if 'positive' in sentiment_lower %}
-                            <div class="sentiment-icon positive"> 😊 </div>
-                    
                             <div class="sentiment-label positive-label">POSITIVE</div>
                         {% elif 'negative' in sentiment_lower %}
-                            <div class="sentiment-icon negative">😞</div>
                             <div class="sentiment-label negative-label">NEGATIVE</div>
                         {% else %}
-                            <div class="sentiment-icon neutral">😐</div>
                             <div class="sentiment-label neutral-label">NEUTRAL</div>
                         {% endif %}
                     </div>
@@ -116,35 +112,83 @@
                 </div>
             </div>
 
-            <!-- Topic Classification -->
+            <!-- Topic Analysis: Classification + LDA Modeling -->
             <div class="result-section">
-                <h2>Topic Classification</h2>
+                <h2>Topic Analysis</h2>
+                
+                <!-- Naive Bayes Classification -->
                 <div class="topic-card">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                        Topic Classification (Naive Bayes)
+                    </h3>
+                    <p class="summary-description">Supervised classification into 20 Newsgroups categories:</p>
+                    
                     <div class="topic-header">
                         <div class="topic-badge">
-                            Topic #{{ result.topic.topic_id }}
+                            Category #{{ result.topic.classification.topic_id }}
                         </div>
-                        <h3 class="topic-name">{{ result.topic.topic_name }}</h3>
+                        <h3 class="topic-name">{{ result.topic.classification.topic_name }}</h3>
                     </div>
 
                     <div class="confidence-bar-container">
                         <div class="confidence-label">Confidence</div>
                         <div class="confidence-bar">
-                            <div class="confidence-fill topic-confidence" style="width: {{ (result.topic.confidence * 100)|round }}%">
-                                {{ (result.topic.confidence * 100)|round(1) }}%
+                            <div class="confidence-fill topic-confidence" style="width: {{ (result.topic.classification.confidence * 100)|round }}%">
+                                {{ (result.topic.classification.confidence * 100)|round(1) }}%
                             </div>
                         </div>
                     </div>
 
                     <div class="topic-probabilities">
-                        <h4>All Topic Probabilities:</h4>
+                        <h4>Top 10 Category Probabilities:</h4>
                         <div class="prob-list">
-                            {% for topic, prob in result.topic.probabilities.items() %}
-                                {% if prob > 0.01 %}
+                            {% for topic, prob in result.topic.classification.probabilities.items() %}
+                                {% if loop.index <= 10 %}
+                                <div class="prob-item">
+                                    <span class="prob-topic">{{ topic }}</span>
+                                    <div class="prob-bar-small">
+                                        <div class="prob-fill" style="width: {{ (prob * 100)|round }}%"></div>
+                                    </div>
+                                    <span class="prob-value">{{ (prob * 100)|round(1) }}%</span>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LDA Topic Modeling -->
+                <div class="topic-card" style="margin-top: 25px;">
+                    <h3 style="color: #00d9ff; margin-bottom: 15px;">
+                        Topic Modeling (LDA - Unsupervised)
+                    </h3>
+                    <p class="summary-description">Latent Dirichlet Allocation discovers hidden topic distributions:</p>
+                    
+                    <div class="topic-header">
+                        <div class="topic-badge" style="background: linear-gradient(135deg, #00d9ff, #0088cc);">
+                            Topic #{{ result.topic.lda.topic_id }}
+                        </div>
+                        <h3 class="topic-name">{{ result.topic.lda.topic_name }}</h3>
+                    </div>
+
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label">Topic Weight</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: {{ (result.topic.lda.confidence * 100)|round }}%; background: linear-gradient(90deg, #00d9ff, #0088cc);">
+                                {{ (result.topic.lda.confidence * 100)|round(1) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="topic-probabilities">
+                        <h4>Topic Distribution (Top 10):</h4>
+                        <div class="prob-list">
+                            {% for topic, prob in result.topic.lda.probabilities.items() %}
+                                {% if loop.index <= 10 and prob > 0.01 %}
                                     <div class="prob-item">
                                         <span class="prob-topic">{{ topic }}</span>
                                         <div class="prob-bar-small">
-                                            <div class="prob-fill" style="width: {{ (prob * 100)|round }}%"></div>
+                                            <div class="prob-fill" style="width: {{ (prob * 100)|round }}%; background: linear-gradient(90deg, #00d9ff, #0088cc);"></div>
                                         </div>
                                         <span class="prob-value">{{ (prob * 100)|round(1) }}%</span>
                                     </div>
@@ -152,16 +196,20 @@
                             {% endfor %}
                         </div>
                     </div>
+
+                    <div class="model-info" style="margin-top: 15px;">
+                        <small>Method: Unsupervised Latent Dirichlet Allocation (LDA)</small>
+                    </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="action-buttons">
                 <a href="{{ url_for('index') }}" class="btn btn-primary">
-                    ✨ Analyze Another Text
+                    Analyze Another Text
                 </a>
                 <button onclick="window.print()" class="btn btn-secondary">
-                    🖨️ Print Results
+                    Print Results (.pdf)
                 </button>
             </div>
         </div>

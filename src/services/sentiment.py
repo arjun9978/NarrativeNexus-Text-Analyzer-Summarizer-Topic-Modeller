@@ -26,11 +26,12 @@ class SentimentService:
                 logger.info("Loading transformer sentiment model...")
                 device = 0 if torch.cuda.is_available() else -1
                 
-                # Use fine-tuned RoBERTa for sentiment
+                # Use fine-tuned RoBERTa for sentiment (offline mode - uses cached models)
                 self.transformer_pipeline = pipeline(
                     "sentiment-analysis",
                     model="cardiffnlp/twitter-roberta-base-sentiment-latest",
-                    device=device
+                    device=device,
+                    local_files_only=True  # Use cached models, no internet needed
                 )
                 logger.info(f"Sentiment model loaded on {'GPU' if device == 0 else 'CPU'}")
             except Exception as e:

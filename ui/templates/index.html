@@ -65,7 +65,6 @@ Examples:
                         <div class="file-upload-area" id="fileUploadArea">
                             <input type="file" id="fileInput" name="file" accept=".txt" onchange="handleFileSelect(this)">
                             <div class="file-upload-placeholder">
-                                <div class="upload-icon">📄</div>
                                 <p>Click to select a .txt file or drag and drop here</p>
                                 <small>Maximum file size: 16 MB</small>
                             </div>
@@ -76,11 +75,9 @@ Examples:
 
                 <div class="button-group">
                     <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <span class="btn-icon">✨</span>
                         Analyze Text
                     </button>
                     <button type="reset" class="btn btn-secondary" onclick="resetForm()">
-                        <span class="btn-icon">🗑️</span>
                         Clear
                     </button>
                 </div>
@@ -88,23 +85,20 @@ Examples:
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
                     <p>Analyzing your text with the models...</p>
-                    <small>This may take a few seconds</small>
+                    <small>This may take a few seconds, please wait patiently</small>
                 </div>
             </form>
 
             <div class="features">
                 <div class="feature-card">
-                    <div class="feature-icon"></div>
                     <h2>Dual Summarization</h2>
                     <p>Both extractive and abstractive summaries</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"></div>
                     <h2>Sentiment Analysis</h2>
                     <p>RoBERTa transformer with confidence scores</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"></div>
                     <h2>Topic Classification</h2>
                     <p>LDA model trained on 20 Newsgroups</p>
                 </div>
