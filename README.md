@@ -120,19 +120,19 @@ The platform implements both extractive and abstractive summarization to provide
 - **Advantages**: Fast, preserves original phrasing, deterministic
 - **Use Case**: When exact quotations are needed
 
-#### Abstractive Summarization (BART Transformer)
-- **Model**: `facebook/bart-large-cnn` (406 million parameters)
-- **Architecture**: Sequence-to-sequence transformer with bidirectional encoder and autoregressive decoder
-- **Pre-training**: Trained on CNN/DailyMail summarization dataset
+#### Abstractive Summarization (T5 Transformer)
+- **Model**: `t5-base` (220 million parameters)
+- **Architecture**: Text-to-Text Transfer Transformer (T5) - unified framework for all NLP tasks
+- **Pre-training**: Trained on C4 dataset with text-to-text paradigm for true generation
 - **Process**:
-  1. Tokenize input text with BART tokenizer
-  2. Encode text through bidirectional transformer layers
-  3. Decode to generate new summary tokens autoregressively
-  4. Apply beam search for optimal summary generation
-- **Advantages**: Generates fluent, human-like summaries; can paraphrase and compress information
-- **Use Case**: When natural-sounding, paraphrased summaries are desired
+  1. Prefix input with "summarize: " for task specification
+  2. Tokenize and encode through T5 encoder layers
+  3. Decode with sampling (temperature=0.7) for creative paraphrasing
+  4. Use top-k and nucleus sampling for diverse outputs
+- **Advantages**: Generates truly paraphrased summaries with natural language variation; uses sampling for creative rewording
+- **Use Case**: When you need genuinely different wording and creative summarization
 
-**Output**: Both summaries are returned together, allowing users to compare extractive (original sentences) and abstractive (paraphrased) versions.
+**Output**: Both summaries are returned together, allowing users to compare extractive (original key sentences) and abstractive (T5-generated paraphrased version).
 
 ### 2.6 API Architecture and User Interface
 
@@ -231,8 +231,8 @@ The platform implements both extractive and abstractive summarization to provide
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │ SUMMARIZATION                                       │   │
 │  │  • TextRank (Extractive) - Graph-based ranking      │   │
-│  │  • BART (Abstractive) - facebook/bart-large-cnn     │   │
-│  │    406M parameters, Seq2Seq Transformer             │   │
+│  │  • T5 (Abstractive) - t5-base                       │   │
+│  │    220M parameters, Sampling-based Paraphrasing     │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐   │
@@ -259,7 +259,7 @@ The platform implements both extractive and abstractive summarization to provide
 │  • models/classifier.pkl          (Naive Bayes 500KB)       │
 │  • models/vectorizer.pkl          (TF-IDF vectorizer)       │
 │  • models/lda_metadata.pkl        (20 categories mapping)   │
-│  • ~/.cache/huggingface/          (BART & RoBERTa 2GB)      │
+│  • ~/.cache/huggingface/          (T5 & RoBERTa 1.5GB)      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -278,7 +278,7 @@ The platform implements both extractive and abstractive summarization to provide
 - Saved model artifacts for inference
 
 ✅ **Pre-trained Transformer Models**:
-- BART for abstractive summarization (406M parameters)
+- T5 for abstractive summarization (220M parameters, sampling-based paraphrasing)
 - RoBERTa for sentiment analysis (125M parameters)
 - Automatic model downloading from Hugging Face Hub
 
@@ -437,7 +437,7 @@ uvicorn src.main:app --host 127.0.0.1 --port 8000
 **Wait for**: `"All models loaded successfully!"`
 
 **Models loaded on startup**:
-- ✓ Summarizer (TextRank + BART)
+- ✓ Summarizer (TextRank + T5)
 - ✓ Sentiment analyzer (RoBERTa)
 - ✓ Topic classifier (Naive Bayes)
 
@@ -515,7 +515,7 @@ curl -X POST "http://127.0.0.1:8000/upload" \
 | Method | Speed (CPU) | Quality | Preserves Original |
 |--------|-------------|---------|-------------------|
 | **Extractive (TextRank)** | ~100ms | Good | ✓ Yes |
-| **Abstractive (BART)** | ~3 seconds | Excellent | ✗ Paraphrased |
+| **Abstractive (T5)** | ~3 seconds | Excellent | ✗ Sampling-based Paraphrasing |
 
 ### Sentiment Analysis
 - **Model**: RoBERTa-base fine-tuned on Twitter sentiment
@@ -576,8 +576,8 @@ curl -X POST "http://127.0.0.1:8000/upload" \
 ### Issue: Models not loading
 **Solution**: Models download automatically on first run. Check internet connection.
 ```bash
-# Manually download BART and RoBERTa
-python -c "from transformers import pipeline; pipeline('summarization', model='facebook/bart-large-cnn'); pipeline('sentiment-analysis', model='cardiffnlp/twitter-roberta-base-sentiment-latest')"
+# Manually download T5 and RoBERTa
+python -c "from transformers import pipeline; pipeline('summarization', model='t5-base'); pipeline('sentiment-analysis', model='cardiffnlp/twitter-roberta-base-sentiment-latest')"
 ```
 
 ### Issue: Port already in use
@@ -593,8 +593,8 @@ app.run(port=5001)
 ### Issue: Slow inference on CPU
 **Solutions**:
 - Install GPU-enabled PyTorch for 10x faster transformer inference
-- Reduce max_length in BART summarization
-- Use smaller models (requires code modification)
+- Reduce max_length in T5 summarization
+- Use smaller models like t5-small (requires code modification)
 
 ### Issue: Topic classification inaccurate
 **Expected**: 65% accuracy means 1 in 3 texts may be misclassified. This is normal for 20 categories with traditional ML.
@@ -628,7 +628,7 @@ This project is created for educational purposes as part of an academic assignme
 ## 15. Acknowledgments
 
 - **20 Newsgroups Dataset**: UCI Machine Learning Repository
-- **Hugging Face**: Pre-trained BART and RoBERTa models
+- **Hugging Face**: Pre-trained T5 and RoBERTa models
 - **Scikit-learn**: Machine learning algorithms and datasets
 - **FastAPI & Flask**: Web framework communities
 - **PyTorch**: Deep learning framework

@@ -30,15 +30,15 @@ class SummarizerService:
         device = 0 if torch.cuda.is_available() else -1
         
         try:
-            # Use BART for abstractive summarization
+            # Use T5 for TRUE abstractive summarization with paraphrasing
             self.abstractive_pipeline = pipeline(
                 "summarization",
-                model="facebook/bart-large-cnn",
+                model="t5-base",  # T5 is trained for text-to-text generation
                 device=device
             )
-            logger.info(f"Abstractive model loaded on {'GPU' if device == 0 else 'CPU'}")
+            logger.info(f"Abstractive model (T5) loaded on {'GPU' if device == 0 else 'CPU'}")
         except Exception as e:
-            logger.error(f"Could not load BART model: {e}")
+            logger.error(f"Could not load T5 model: {e}")
             self.abstractive_pipeline = None
     
     def summarize_extractive(self, text: str, sentence_count: int = 5) -> str:
@@ -83,15 +83,22 @@ class SummarizerService:
             
             # Calculate dynamic lengths based on input
             input_word_count = len(text.split())
-            max_length = min(200, max(80, int(input_word_count * 0.4)))
-            min_length = max(30, int(max_length * 0.4))
+            # T5 needs prefix "summarize: " and shorter output forces compression
+            max_length = min(150, max(50, int(input_word_count * 0.30)))
+            min_length = max(25, int(max_length * 0.40))
             
-            # Generate summary
+            # Add T5 prefix for summarization task
+            text_with_prefix = "summarize: " + text
+            
+            # Generate summary with T5
             result = self.abstractive_pipeline(
-                text,
+                text_with_prefix,
                 max_length=max_length,
                 min_length=min_length,
-                do_sample=False,
+                do_sample=True,            # Enable sampling for variation
+                temperature=0.7,           # Add some randomness
+                top_k=50,                  # Top-k sampling
+                top_p=0.95,                # Nucleus sampling
                 truncation=True
             )
             
